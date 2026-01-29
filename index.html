@@ -1,89 +1,125 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Salesforce Authenticated Chat Test</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salesforce Auth Handshake</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .container { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; max-width: 500px; }
-        h1 { color: #0176d3; margin-bottom: 10px; }
-        .status-badge { display: inline-block; padding: 8px 16px; border-radius: 20px; background: #ecebea; font-weight: bold; margin-top: 20px; }
-        #status-text { color: #514f4d; }
-        .success { background: #04844b !important; color: white !important; }
-        .error { background: #ea001e !important; color: white !important; }
+        :root {
+            --sf-blue: #0176d3;
+            --sf-green: #2e844a;
+            --sf-gray: #f3f3f2;
+            --text-main: #181818;
+        }
+        body {
+            font-family: 'Salesforce Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #eef2f6 0%, #dae1e7 100%);
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; margin: 0; color: var(--text-main);
+        }
+        .card {
+            background: white; width: 450px; padding: 40px; border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1); text-align: center;
+            border-top: 6px solid var(--sf-blue);
+        }
+        .logo { width: 80px; margin-bottom: 20px; }
+        h1 { font-size: 24px; margin-bottom: 8px; color: var(--sf-blue); }
+        p { color: #514f4d; margin-bottom: 30px; line-height: 1.5; }
+        
+        .status-container {
+            background: var(--sf-gray); padding: 20px; border-radius: 12px;
+            display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;
+        }
+        .status-item {
+            display: flex; align-items: center; justify-content: space-between;
+            font-size: 14px; font-weight: 600;
+        }
+        .badge {
+            padding: 4px 10px; border-radius: 4px; font-size: 11px;
+            text-transform: uppercase; background: #c9c7c5; color: white;
+        }
+        .badge.active { background: var(--sf-blue); }
+        .badge.success { background: var(--sf-green); }
+
+        .console-box {
+            background: #000; color: #00ff00; padding: 15px; border-radius: 8px;
+            font-family: 'Courier New', monospace; font-size: 12px; text-align: left;
+            max-height: 100px; overflow-y: auto; box-shadow: inset 0 0 10px #222;
+        }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Identity Handshake Test</h1>
-        <p>Testing domain: <strong>lvh.me:5500</strong></p>
-        <div id="status-badge" class="status-badge">
-            <span id="status-text">🔄 Initializing Salesforce...</span>
+    <div class="card">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/f/f9/Salesforce.com_logo.svg" alt="SF" class="logo">
+        <h1>Identity Verification</h1>
+        <p>This environment is testing the secure handshake between GitHub Pages and Salesforce.</p>
+
+        <div class="status-container">
+            <div class="status-item">
+                <span>Bootstrap Engine</span>
+                <span id="badge-engine" class="badge">Waiting...</span>
+            </div>
+            <div class="status-item">
+                <span>JWT Authentication</span>
+                <span id="badge-auth" class="badge">Pending</span>
+            </div>
         </div>
-        <p style="font-size: 0.8em; color: #747474; margin-top: 20px;">
-            If the chat icon doesn't appear, ensure you are "Available" in Salesforce Omni-Channel.
-        </p>
+
+        <div id="debug-log" class="console-box">
+            > Initializing system...
+        </div>
     </div>
 
     <script type='text/javascript'>
-        // 1. YOUR IDENTITY TOKEN (Generated with kid: TestKey1 and iss: my-local-test-issuer)
         const MY_TOKEN = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IlRlc3RLZXkxIn0.eyJpc3MiOiJteS1sb2NhbC10ZXN0LWlzc3VlciIsInN1YiI6InRlc3R1c2VyQGV4YW1wbGUuY29tIiwiZXhwIjoxOTk5OTk5OTk5fQ.n6MtGpINr41deswqhD4BTcSD8Vyih6SvtnhQ3RbQazZpkZuhL2CLen13ZfEbeeBRFtw_0d8i7kB2pO95134t6uox3sJvTUlStzzYIQITQRw7kidIyKrD6Wuo3pxWohz1oVJzidazY92AQFU0KM7k5fI3OXiAwwTdVSF1W3EJwsbuDb1WCzZkIEFB68r7vrNzJK6k6_09FEpwb5GCP5JmeP7tFF1TZhiRTJ3uMhimZVtZgw_7TVXtS4p0UujGrreDyrcWYkg4p6bRuCKl2B9V86-6iIlO-Ut97THOGcLAqDvgq7MfGr83jfr4BKEvQvLIGZLu7knE6-ZQvHBICwZ_KA";
+
+        function log(msg) {
+            const box = document.getElementById('debug-log');
+            box.innerHTML += `<br>> ${msg}`;
+            box.scrollTop = box.scrollHeight;
+        }
 
         function initEmbeddedMessaging() {
             try {
                 embeddedservice_bootstrap.settings.language = 'en_US';
-
-                // Initialize with your 'lv' deployment settings
                 embeddedservice_bootstrap.init(
                     '00DS900000Dgm1o',
-                    'lv',
-                    'https://quartix--snowdrop.sandbox.my.site.com/ESWlv1769696522963',
-                    {
-                        scrt2URL: 'https://quartix--snowdrop.sandbox.my.salesforce-scrt.com'
-                    }
+                    'Andrei1515',
+                    'https://quartix--snowdrop.sandbox.my.site.com/ESWAndrei15151769699733620',
+                    { scrt2URL: 'https://quartix--snowdrop.sandbox.my.salesforce-scrt.com' }
                 );
+                log("Bootstrap initiated.");
+                document.getElementById('badge-engine').innerText = "Loaded";
+                document.getElementById('badge-engine').classList.add('active');
             } catch (err) {
-                console.error('Error loading Embedded Messaging: ', err);
-                updateStatus("❌ Load Error", "error");
+                log("ERROR: " + err);
             }
         };
 
-        function updateStatus(text, className) {
-            const badge = document.getElementById('status-badge');
-            const statusText = document.getElementById('status-text');
-            statusText.innerText = text;
-            if (className) badge.classList.add(className);
-        }
-
-window.addEventListener("onEmbeddedMessagingReady", () => {
-    console.log("🟢 ON_READY: Salesforce Engine Loaded!");
-    document.getElementById('status').innerText = "Authenticating user...";
-
-    embeddedservice_bootstrap.userVerificationAPI.setIdentityToken({
-        identityTokenType: "JWT",
-        identityToken: MY_TOKEN
-    }).then(() => {
-        console.log("✅ SUCCESS: JWT Accepted by Salesforce.");
-        document.getElementById('status').innerText = "Identity Verified!";
-        
-        // Force the chat button to appear immediately
-        embeddedservice_bootstrap.util.showChatButton();
-    }).catch((err) => {
-        console.error("❌ AUTH FAILURE: Check your JWT Key ID (kid) and Issuer (iss).", err);
-        document.getElementById('status').innerText = "Auth Failed. Check console.";
-    });
-});
-
-        // 3. OFFLINE SUPPORT LOGIC
-        window.addEventListener("onEmbeddedMessagingOfflineSupportReady", () => {
-            console.log("🟠 OFFLINE: Agents are away. Showing Case form.");
-            updateStatus("🟠 Offline Mode Active", "");
+        // THE HANDSHAKE LOGIC
+        window.addEventListener("onEmbeddedMessagingReady", () => {
+            log("Engine Ready. Sending JWT...");
+            
+            embeddedservice_bootstrap.userVerificationAPI.setIdentityToken({
+                identityTokenType: "JWT",
+                identityToken: MY_TOKEN
+            }).then(() => {
+                log("SUCCESS: Identity verified.");
+                document.getElementById('badge-auth').innerText = "Verified";
+                document.getElementById('badge-auth').classList.add('success');
+                
+                // Force show the button if everything is valid
+                embeddedservice_bootstrap.util.showChatButton();
+            }).catch((err) => {
+                log("AUTH FAILED: Check Keyset Settings.");
+                console.error(err);
+            });
         });
     </script>
 
     <script type='text/javascript' 
-            src='https://quartix--snowdrop.sandbox.my.site.com/ESWlv1769696522963/assets/js/bootstrap.min.js' 
+            src='https://quartix--snowdrop.sandbox.my.site.com/ESWAndrei15151769699733620/assets/js/bootstrap.min.js' 
             onload='initEmbeddedMessaging()'>
     </script>
 
