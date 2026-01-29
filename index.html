@@ -24,7 +24,7 @@
         }
         .logo { width: 80px; margin-bottom: 20px; }
         h1 { font-size: 24px; margin-bottom: 8px; color: var(--sf-blue); }
-        p { color: #514f4d; margin-bottom: 30px; line-height: 1.5; }
+        p { color: #514f4d; margin-bottom: 30px; line-height: 1.5; font-size: 14px; }
         
         .status-container {
             background: var(--sf-gray); padding: 20px; border-radius: 12px;
@@ -32,19 +32,20 @@
         }
         .status-item {
             display: flex; align-items: center; justify-content: space-between;
-            font-size: 14px; font-weight: 600;
+            font-size: 13px; font-weight: 600;
         }
         .badge {
-            padding: 4px 10px; border-radius: 4px; font-size: 11px;
+            padding: 4px 10px; border-radius: 4px; font-size: 10px;
             text-transform: uppercase; background: #c9c7c5; color: white;
         }
         .badge.active { background: var(--sf-blue); }
         .badge.success { background: var(--sf-green); }
 
         .console-box {
-            background: #000; color: #00ff00; padding: 15px; border-radius: 8px;
-            font-family: 'Courier New', monospace; font-size: 12px; text-align: left;
-            max-height: 100px; overflow-y: auto; box-shadow: inset 0 0 10px #222;
+            background: #161b22; color: #58a6ff; padding: 15px; border-radius: 8px;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 12px; text-align: left; max-height: 120px; overflow-y: auto;
+            border: 1px solid #30363d;
         }
     </style>
 </head>
@@ -52,22 +53,22 @@
 
     <div class="card">
         <img src="https://upload.wikimedia.org/wikipedia/commons/f/f9/Salesforce.com_logo.svg" alt="SF" class="logo">
-        <h1>Identity Verification</h1>
-        <p>This environment is testing the secure handshake between GitHub Pages and Salesforce.</p>
+        <h1>Secure Handshake</h1>
+        <p>Verified Identity + Manual Pre-Chat Input</p>
 
         <div class="status-container">
             <div class="status-item">
-                <span>Bootstrap Engine</span>
-                <span id="badge-engine" class="badge">Waiting...</span>
+                <span>Messaging Engine</span>
+                <span id="badge-engine" class="badge">Offline</span>
             </div>
             <div class="status-item">
-                <span>JWT Authentication</span>
-                <span id="badge-auth" class="badge">Pending</span>
+                <span>Identity Verification (JWT)</span>
+                <span id="badge-auth" class="badge">Waiting</span>
             </div>
         </div>
 
         <div id="debug-log" class="console-box">
-            > Initializing system...
+            > Initializing secure tunnel...
         </div>
     </div>
 
@@ -89,32 +90,33 @@
                     'https://quartix--snowdrop.sandbox.my.site.com/ESWAndrei15151769699733620',
                     { scrt2URL: 'https://quartix--snowdrop.sandbox.my.salesforce-scrt.com' }
                 );
-                log("Bootstrap initiated.");
-                document.getElementById('badge-engine').innerText = "Loaded";
+                log("Bootstrap engine loaded.");
+                document.getElementById('badge-engine').innerText = "Active";
                 document.getElementById('badge-engine').classList.add('active');
             } catch (err) {
-                log("ERROR: " + err);
+                log("LOAD ERROR: " + err);
             }
         };
 
-        // THE HANDSHAKE LOGIC
         window.addEventListener("onEmbeddedMessagingReady", () => {
-            log("Engine Ready. Sending JWT...");
-            
-            embeddedservice_bootstrap.userVerificationAPI.setIdentityToken({
-                identityTokenType: "JWT",
-                identityToken: MY_TOKEN
-            }).then(() => {
-                log("SUCCESS: Identity verified.");
+            log("Engine Ready. Performing Auth...");
+
+            // SET IDENTITY TOKEN
+            try {
+                // Identity verification is handled via JWT; no pre-chat fields needed for this.
+                embeddedservice_bootstrap.userVerificationAPI.setIdentityToken({
+                    identityTokenType: "JWT",
+                    identityToken: MY_TOKEN
+                });
+                log("JWT Handshake success.");
                 document.getElementById('badge-auth').innerText = "Verified";
                 document.getElementById('badge-auth').classList.add('success');
-                
-                // Force show the button if everything is valid
-                embeddedservice_bootstrap.util.showChatButton();
-            }).catch((err) => {
-                log("AUTH FAILED: Check Keyset Settings.");
-                console.error(err);
-            });
+            } catch (e) {
+                log("JWT Error: " + e.message);
+            }
+
+            // SHOW BUTTON (Fields will be blank as per Salesforce Setup)
+            embeddedservice_bootstrap.util.showChatButton();
         });
     </script>
 
